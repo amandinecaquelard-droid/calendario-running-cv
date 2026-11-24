@@ -1,1 +1,341 @@
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#173f35">
+  <title>Calendario Running CV</title>
+  <style>
+    :root {
+      --verde: #173f35;
+      --verde-claro: #e7f0eb;
+      --fondo: #f5f7f5;
+      --texto: #26352f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--fondo);
+      color: var(--texto);
+    }
+
+    header {
+      background: var(--verde);
+      color: white;
+      padding: 28px 18px;
+      text-align: center;
+    }
+
+    header h1 { margin: 0 0 8px; font-size: 27px; }
+    header p { margin: 0; opacity: .9; }
+
+    main {
+      max-width: 950px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    .filtros {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    select, input {
+      padding: 12px;
+      border: 1px solid #ccd6d0;
+      border-radius: 9px;
+      background: white;
+      font-size: 15px;
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .mes {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 9px;
+      padding: 11px 15px;
+      background: var(--verde);
+      color: white;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    #tituloMes { font-size: 21px; font-weight: bold; }
+
+    .calendario {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+    }
+
+    .dia-semana {
+      text-align: center;
+      font-weight: bold;
+      padding: 10px 0;
+      font-size: 13px;
+    }
+
+    .casilla {
+      background: white;
+      border: 1px solid #e0e7e2;
+      border-radius: 8px;
+      min-height: 85px;
+      padding: 7px;
+      font-size: 13px;
+    }
+
+    .casilla.vacia { background: transparent; border: 0; }
+    .numero { font-weight: bold; margin-bottom: 5px; }
+
+    .carrera {
+      display: block;
+      background: var(--verde-claro);
+      color: var(--verde);
+      border-radius: 5px;
+      padding: 4px;
+      margin-top: 4px;
+      font-size: 11px;
+      overflow-wrap: anywhere;
+    }
+
+    .listado { margin-top: 28px; }
+    .evento {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 10px;
+      border: 1px solid #e0e7e2;
+    }
+
+    .evento h3 { margin: 0 0 8px; color: var(--verde); }
+    .evento p { margin: 5px 0; font-size: 14px; }
+    .tipo { font-weight: bold; color: #47715d; }
+
+    .sin-eventos {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      color: #63736a;
+    }
+
+    footer {
+      text-align: center;
+      padding: 25px;
+      color: #6b786f;
+      font-size: 12px;
+    }
+
+    @media (max-width: 550px) {
+      .casilla { min-height: 65px; padding: 4px; }
+      .carrera { font-size: 9px; }
+      .dia-semana { font-size: 11px; }
+      #tituloMes { font-size: 17px; }
+      header h1 { font-size: 23px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🏃 Calendario Running CV</h1>
+    <p>Carreras populares, asfalto y trail de la Comunitat Valenciana</p>
+  </header>
+
+  <main>
+    <div class="filtros">
+      <select id="provincia">
+        <option value="">Todas las provincias</option>
+        <option value="Valencia">Valencia</option>
+        <option value="Alicante">Alicante</option>
+        <option value="Castellón">Castellón</option>
+      </select>
+
+      <select id="tipo">
+        <option value="">Todos los tipos</option>
+        <option value="Asfalto">Asfalto</option>
+        <option value="Trail">Trail</option>
+        <option value="Carrera popular">Carrera popular</option>
+        <option value="Media maratón">Media maratón</option>
+        <option value="Maratón">Maratón</option>
+      </select>
+
+      <input id="busqueda" type="search" placeholder="Buscar carrera o localidad...">
+    </div>
+
+    <div class="mes">
+      <button id="anterior" aria-label="Mes anterior">‹</button>
+      <span id="tituloMes"></span>
+      <button id="siguiente" aria-label="Mes siguiente">›</button>
+    </div>
+
+    <div class="calendario" id="calendario"></div>
+
+    <section class="listado">
+      <h2>Próximas carreras</h2>
+      <div id="eventos"></div>
+    </section>
+  </main>
+
+  <footer>Calendario Running CV · Comunitat Valenciana</footer>
+
+  <script>
+    // Aquí añadiremos las carreras del calendario.
+    const carreras = [];
+
+    const nombresMeses = [
+      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
+
+    let fecha = new Date();
+    fecha = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
+
+    const provincia = document.getElementById("provincia");
+    const tipo = document.getElementById("tipo");
+    const busqueda = document.getElementById("busqueda");
+
+    function carrerasFiltradas() {
+      const texto = busqueda.value.toLowerCase();
+
+      return carreras.filter(c => {
+        return (!provincia.value || c.provincia === provincia.value) &&
+          (!tipo.value || c.tipo === tipo.value) &&
+          (!texto || (c.nombre + " " + c.localidad).toLowerCase().includes(texto));
+      });
+    }
+
+    function dibujar() {
+      const año = fecha.getFullYear();
+      const mes = fecha.getMonth();
+
+      document.getElementById("tituloMes").textContent =
+        nombresMeses[mes] + " " + año;
+
+      const calendario = document.getElementById("calendario");
+      calendario.innerHTML = "";
+
+      ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].forEach(d => {
+        const el = document.createElement("div");
+        el.className = "dia-semana";
+        el.textContent = d;
+        calendario.appendChild(el);
+      });
+
+      const primerDia = (new Date(año, mes, 1).getDay() + 6) % 7;
+      const diasMes = new Date(año, mes + 1, 0).getDate();
+      const filtradas = carrerasFiltradas();
+
+      for (let i = 0; i < primerDia; i++) {
+        const el = document.createElement("div");
+        el.className = "casilla vacia";
+        calendario.appendChild(el);
+      }
+
+      for (let dia = 1; dia <= diasMes; dia++) {
+        const el = document.createElement("div");
+        el.className = "casilla";
+
+        const numero = document.createElement("div");
+        numero.className = "numero";
+        numero.textContent = dia;
+        el.appendChild(numero);
+
+        filtradas.filter(c => {
+          const f = new Date(c.fecha + "T12:00:00");
+          return f.getFullYear() === año &&
+            f.getMonth() === mes && f.getDate() === dia;
+        }).forEach(c => {
+          const etiqueta = document.createElement("span");
+          etiqueta.className = "carrera";
+          etiqueta.textContent = c.nombre;
+          el.appendChild(etiqueta);
+        });
+
+        calendario.appendChild(el);
+      }
+
+      const lista = document.getElementById("eventos");
+      lista.innerHTML = "";
+
+      const mesCarreras = filtradas
+        .filter(c => {
+          const f = new Date(c.fecha + "T12:00:00");
+          return f.getFullYear() === año && f.getMonth() === mes;
+        })
+        .sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+      if (mesCarreras.length === 0) {
+        lista.innerHTML = '<div class="sin-eventos">Todavía no hay carreras añadidas para este mes.</div>';
+        return;
+      }
+
+      mesCarreras.forEach(c => {
+        const el = document.createElement("article");
+        el.className = "evento";
+
+        const fechaCarrera = new Date(c.fecha + "T12:00:00");
+        const fechaTexto = fechaCarrera.toLocaleDateString("es-ES", {
+          day: "numeric", month: "long", year: "numeric"
+        });
+
+        const titulo = document.createElement("h3");
+        titulo.textContent = c.nombre;
+        el.appendChild(titulo);
+
+        const datos = [
+          "📅 " + fechaTexto,
+          "📍 " + c.localidad + " (" + c.provincia + ")",
+          "🏁 " + c.tipo
+        ];
+
+        datos.forEach(d => {
+          const p = document.createElement("p");
+          p.textContent = d;
+          el.appendChild(p);
+        });
+
+        if (c.enlace) {
+          const a = document.createElement("a");
+          a.href = c.enlace;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.textContent = "Información e inscripciones";
+          el.appendChild(a);
+        }
+
+        lista.appendChild(el);
+      });
+    }
+
+    document.getElementById("anterior").addEventListener("click", () => {
+      fecha.setMonth(fecha.getMonth() - 1);
+      dibujar();
+    });
+
+    document.getElementById("siguiente").addEventListener("click", () => {
+      fecha.setMonth(fecha.getMonth() + 1);
+      dibujar();
+    });
+
+    provincia.addEventListener("change", dibujar);
+    tipo.addEventListener("change", dibujar);
+    busqueda.addEventListener("input", dibujar);
+
+    dibujar();
+  </script>
+</body>
+</html>
